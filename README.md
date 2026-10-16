@@ -15,7 +15,7 @@ chaoxing-extension/            浏览器扩展（主体）
   popup.html / popup.css / popup.js   工具弹窗：倍速、一键操作、模型配置、诊断
   question_bank.json           本地题库（默认关闭，可作兜底）
   test_core.js                 纯函数测试（41 项）
-  test_dom.js                  jsdom 页面级测试（56 项）
+  test_dom.js                  jsdom 页面级测试（57 项）
   test_background.js           后台与跨帧测试（26 项）
   README.md                    扩展详细说明（工作流、修复记录、FAQ）
 study_helper.py                命令行题库工具：导入 / 检索 / 练习 / 错题记录
@@ -47,7 +47,7 @@ node chaoxing-extension/test_background.js
 NODE_PATH=<node_modules 路径> node chaoxing-extension/test_dom.js   # 需要 jsdom
 ```
 
-合计 123 项断言。
+合计 124 项断言。
 
 ## 命令行题库工具
 

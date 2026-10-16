@@ -254,14 +254,15 @@ function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
   /* 11. autoSubmitPage 关闭时不提交（前面已断言 submitClicks===0） */
   check('关闭开关时未点保存', saveClicks === 0, saveClicks);
 
-  /* 12. autoSubmitPage 打开时自动提交一次且仅一次 */
-  mod.__setSettings({ autoAnswer: false, autoPlay: false, skipDialog: false, mute: false, speed: 1, useAI: true, useBank: false, retry: 0, fillInputs: true, autoSubmitPage: true });
+  /* 12. autoSubmitPage 打开时自动提交一次且仅一次；提交后进入"等待确认"，不一点就算完成 */
+  mod.__setSettings({ autoAnswer: false, autoPlay: false, skipDialog: false, mute: false, speed: 1, useAI: true, useBank: false, retry: 0, fillInputs: true, autoSubmitPage: true, submitGap: 6, autoNext: true });
   mod.autoSubmitTick();
   check('开启开关后自动点击提交', submitClicks === 1, submitClicks);
-  check('标记为已提交', mod.__flags().pageSubmitDone === true);
+  check('提交后进入等待确认（不再一点就判完成）',
+    mod.__flags().submitClickedAt > 0 && mod.__flags().pageSubmitDone === false, mod.__flags());
   mod.autoSubmitTick();
   await mod.answerQuiz(true);
-  check('重复触发不重复提交', submitClicks === 1, submitClicks);
+  check('等待期内不重复提交', submitClicks === 1, submitClicks);
   check('全程未点"暂时保存"', saveClicks === 0, saveClicks);
 
   /* 13. 弹窗处理：提示框 / 提交确认 / 任务点未完成 */
@@ -326,14 +327,16 @@ function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
   check('autoNext 关闭时不处理任务点弹窗', mod.skipDialogs() === false && goNext2 === 0, goNext2);
   dlg4.remove();
 
-  // 13.5 章节切换重置 pageSubmitDone
+  // 13.5 章节切换重置 pageSubmitDone 与提交时刻
+  mod.__setSubmitted(true);
   check('章节切换前 pageSubmitDone=true', mod.__flags().pageSubmitDone === true);
   win.history.pushState({}, '', '/mycourse/studentwork?courseId=1&workId=999');
   mod.checkChapterChange();
   check('章节切换后 pageSubmitDone 重置', mod.__flags().pageSubmitDone === false);
+  check('章节切换后提交时刻也重置', mod.__flags().submitClickedAt === 0);
 
   /* 14. 「下一节」识别：学习通底部是 <div class="jb_btn">下一节</div> 这类非标准按钮 */
-  mod.__setSettings(Object.assign({}, baseSet, { autoNext: true }));
+  mod.__setSettings(Object.assign({}, baseSet, { autoNext: true, submitGap: 0 }));
   let nextClicks = 0, prevClicks = 0;
   const bar = document.createElement('div');
   bar.className = 'prev_next';
@@ -349,21 +352,9 @@ function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
   mod.clickNextChapter();
   check('clickNextChapter 点了「下一节」', nextClicks === 1, nextClicks);
   check('未点「上一节」', prevClicks === 0, prevClicks);
-
-  // ensureAdvance：结果页停留时兜底续点，节流内不重复
-  mod.__setSubmitted(true);
-  mod.__resetDialogThrottle();
-  const adv1 = mod.ensureAdvance();
-  check('已提交后兜底进入下一节', adv1 === true && nextClicks === 2, { adv1, nextClicks });
-  const adv2 = mod.ensureAdvance();
-  check('节流内不重复点击', adv2 === false && nextClicks === 2, { adv2, nextClicks });
-  mod.__setSubmitted(false);
   bar.remove();
 
-  /* 15. 结果页续进：即使内部提交标记丢失，凭"我的答案"也能识别并续点下一节 */
-  mod.__setSettings(Object.assign({}, baseSet, { autoNext: true }));
-  mod.__setSubmitted(false);
-
+  /* 15. 提交冷却间隔（提交与下一节必须间隔开）+ 结果页续进 */
   const resBox = document.createElement('div');
   resBox.id = 'resultBox';
   resBox.innerHTML = '<div>我的答案：ABCD</div><div>33.3 分</div>';
@@ -378,9 +369,22 @@ function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
   document.body.appendChild(nav2);
   nav2.addEventListener('click', () => { nextClicks2 += 1; });
 
+  // 15.1 冷却间隔内（10s）绝不翻页 —— 这正是"提交与下一节间隔太短"的修复点
+  mod.__setSettings(Object.assign({}, baseSet, { autoNext: true, submitGap: 10 }));
+  mod.__simulateSubmit(0);
   mod.__resetDialogThrottle();
-  const adv3 = mod.ensureAdvance();
-  check('结果页兜底点下一节（不依赖内部提交标记）', adv3 === true && nextClicks2 === 1, { adv3, nextClicks2 });
+  const advWait = mod.ensureAdvance();
+  check('提交后冷却间隔内不翻页', advWait === false && nextClicks2 === 0, { advWait, nextClicks2 });
+
+  // 15.2 已等满间隔（提交于 5s 前，间隔 3s）→ 翻页一次，且 4s 节流内不重复
+  mod.__setSettings(Object.assign({}, baseSet, { autoNext: true, submitGap: 3 }));
+  mod.__simulateSubmit(5000);
+  mod.__resetDialogThrottle();
+  const advOk = mod.ensureAdvance();
+  check('冷却结束且已确认后进入下一节', advOk === true && nextClicks2 === 1, { advOk, nextClicks2 });
+  const advAgain = mod.ensureAdvance();
+  check('4s 节流内不重复点击', advAgain === false && nextClicks2 === 1, { advAgain, nextClicks2 });
+
   resBox.remove();
   nav2.remove();
   check('移除结果页后不再判定', mod.resultsDetected() === false, mod.resultsDetected());

@@ -83,6 +83,15 @@
       </select>
     </label>
     <label><input type="checkbox" id="autoSubmitPage"> 全部答完后自动点整页提交</label>
+    <label class="inline">提交后等待（再点下一节）
+      <select id="submitGap">
+        <option value="0">0 秒</option>
+        <option value="3">3 秒</option>
+        <option value="6">6 秒（推荐）</option>
+        <option value="10">10 秒</option>
+      </select>
+    </label>
+    <p class="hint">提交与"下一节"之间留出间隔，等平台把任务点记为"已完成"，避免翻页太快导致整章未完成。</p>
     <button id="btnSave" class="primary">保存设置</button>
   </section>
 

@@ -18,7 +18,8 @@
     retry: 2,
     skipDialog: true,
     fillInputs: true,
-    autoSubmitPage: true
+    autoSubmitPage: true,
+    submitGap: 6   // 点"提交"后至少等 N 秒再点"下一节"，避免平台还没记上"已完成"就翻页
   };
 
   var settings = Object.assign({}, DEFAULTS);
@@ -39,6 +40,7 @@
   var lastAdvanceAt = 0;
   var lastAskAt = 0;
   var lastChapterKey = '';
+  var submitClickedAt = 0;   // 点击"提交"的时刻（0=尚未提交）；提交与下一节必须隔开，等平台记上"已完成"
 
   /* ================= 纯函数工具（可测试） ================= */
 
@@ -585,6 +587,7 @@
     if (!k) return;
     if (lastChapterKey && k !== lastChapterKey) {
       pageSubmitDone = false;
+      submitClickedAt = 0;
       rootStates = new WeakMap();
       lastAdvanceAt = 0;
       lastDialogActionAt = 0;
@@ -1185,6 +1188,11 @@
   /** 整页提交：仅当每道题都已成功作答（或已判定正确）且开关打开 */
   function maybeSubmitPage() {
     if (!settings.autoSubmitPage || pageSubmitDone) return false;
+    // 已点过提交、正等平台确认：不要重复点
+    if (submitClickedAt && !submittedConfirmed()) {
+      state.lastAction = '已提交，等待平台记录"已完成"…（' + submitGapMs() / 1000 + 's）';
+      return false;
+    }
     var groups = findQuestionGroups();
     if (!groups.length) return false;
 
@@ -1207,9 +1215,10 @@
       return false;
     }
     btn.click();
-    pageSubmitDone = true;
-    lastPageSubmitAt = Date.now();
-    state.lastAction = '已点击整页提交';
+    submitClickedAt = Date.now();
+    lastPageSubmitAt = submitClickedAt;
+    pageSubmitDone = false;   // 提交"是否被平台接受"需等结果页/超时确认，不能一点就算完成
+    state.lastAction = '已点击整页提交，等待 ' + (submitGapMs() / 1000) + 's 让平台记录后再下一节';
     scheduleNextAfterSubmit();
     return true;
   }
@@ -1221,54 +1230,75 @@
     } catch (e) { /* 非扩展环境 */ }
   }
 
-  /** 提交后自动去下一节/下一任务点（测验页没有视频，ended 事件不会触发） */
+  /** 提交后自动去下一节：轮询调用 ensureAdvance，由它统一处理"等间隔 + 等确认 + 跨帧代点" */
   function scheduleNextAfterSubmit() {
     if (!settings.autoNext) return;
     if (nextWatchTimer) return;
     var tries = 0;
-    var waitTexts = ['继续学习', '下一节', '下一章', '下一个', '返回课程', '继续答题', '继续观看', '继续'];
     nextWatchTimer = setInterval(function () {
       tries += 1;
-      if (tries > 24) {
+      if (tries > 40) {
         clearInterval(nextWatchTimer);
         nextWatchTimer = null;
-        state.lastAction = '已提交，未找到下一节入口（可手动点目录）';
+        if (!pageSubmitDone) state.lastAction = '提交后等待超时，仍未确认提交结果（可手动点下一节）';
         return;
       }
-      if (tries === 6) askOtherFramesForNext();
-      var btn = findNextButton() || findClickableByText(waitTexts, 10);
-      if (btn) {
-        btn.click();
-        lastAdvanceAt = Date.now();
-        state.lastAction = '提交后点击：' + textOf(btn);
-        clearInterval(nextWatchTimer);
-        nextWatchTimer = null;
-        return;
-      }
-      var link = findNextChapterLink();
-      if (link) {
-        link.click();
-        lastAdvanceAt = Date.now();
-        state.lastAction = '提交后跳转下一节';
+      if (ensureAdvance()) {
         clearInterval(nextWatchTimer);
         nextWatchTimer = null;
       }
-    }, 1500);
+    }, 1000);
   }
 
-  /** 兜底续点：已提交但结果页一直停留时，每 tick 检查一次"下一节"（节流 4s，幂等） */
-  /** 结果页判定：出现"我的答案/正确答案/答案解析/回答正确/回答错误"说明已提交 */
+  /** 结果页判定：出现"我的答案/正确答案/得分/提交成功"等说明平台已受理提交 */
   function resultsDetected() {
     var t = '';
     try { t = (document.body && document.body.innerText) || ''; } catch (e) { t = ''; }
-    return /我的答案|正确答案|答案解析|回答正确|回答错误|作答正确|作答错误/.test(t);
+    return /我的答案|正确答案|答案解析|回答正确|回答错误|作答正确|作答错误|本次得分|得分[:：]|成绩[:：]|提交成功|答题结果/.test(t);
   }
 
-  /** 已提交或已出结果，就把流程推到下一节。
+  /** 提交后要求的"冷却间隔"（秒）：留足时间让平台把任务点记为"已完成" */
+  function submitGapMs() {
+    var s = parseInt(settings.submitGap, 10);
+    if (isNaN(s) || s < 0) s = 6;
+    return s * 1000;
+  }
+
+  /** 是否已过冷却间隔 */
+  function submitSettled() {
+    if (!submitClickedAt) return false;
+    return Date.now() - submitClickedAt >= submitGapMs();
+  }
+
+  /** 提交是否已被平台确认（结果页出现即确认；超时兜底，避免永久卡死） */
+  function submittedConfirmed() {
+    if (pageSubmitDone) return true;
+    if (resultsDetected()) { pageSubmitDone = true; return true; }
+    if (submitClickedAt && Date.now() - submitClickedAt > 15000) {
+      pageSubmitDone = true;
+      state.lastAction = '提交后 15s 内未见结果页，按已提交继续';
+      return true;
+    }
+    return false;
+  }
+
+  /** 若页面已出现结果（例如用户手动提交过），补记提交时刻，以便同样走冷却间隔 */
+  function noteSubmitted() {
+    if (!submitClickedAt && resultsDetected()) submitClickedAt = Date.now();
+  }
+
+  /** 提交确认 + 冷却间隔都满足后，才把流程推到下一节。
       本帧找不到"下一节"按钮时，请持有该按钮的其它 frame 代点（学习通按钮常在别的 frame）。 */
   function ensureAdvance() {
     if (!settings.autoNext) return false;
-    if (!pageSubmitDone && !resultsDetected()) return false;
+    noteSubmitted();
+    if (!submitClickedAt) return false;
+    if (!submitSettled()) {
+      state.lastAction = '提交后等待平台记录：还需 ' +
+        Math.ceil((submitGapMs() - (Date.now() - submitClickedAt)) / 1000) + 's';
+      return false;
+    }
+    if (!submittedConfirmed()) return false;
     var btn = findNextButton();
     if (btn) {
       if (Date.now() - lastAdvanceAt < 4000) return false;
@@ -1312,10 +1342,15 @@
     return seq.then(function () {
       saveCache();
       if (!needsWork()) {
-        if (!maybeSubmitPage()) {
-          var resume = findResumeButton();
-          if (resume) { resume.click(); state.lastAction = '答题结束，恢复播放'; }
-        }
+        // 作答完成后先停 800ms，让平台记上最后一次选择，再点提交（避免"选了就交"被判未完成）
+        return sleep(800).then(function () {
+          if (!maybeSubmitPage()) {
+            var resume = findResumeButton();
+            if (resume) { resume.click(); state.lastAction = '答题结束，恢复播放'; }
+          }
+          reportState();
+          return { ok: true, answered: processed };
+        });
       }
       reportState();
       return { ok: true, answered: processed };
@@ -1513,10 +1548,12 @@
       autoSubmitTick: autoSubmitTick,
       state: state,
       settings: settings,
-      __flags: function () { return { pageSubmitDone: pageSubmitDone }; },
+      __flags: function () { return { pageSubmitDone: pageSubmitDone, submitClickedAt: submitClickedAt }; },
       resultsDetected: resultsDetected,
       __resetDialogThrottle: function () { lastDialogActionAt = 0; lastAdvanceAt = 0; lastAskAt = 0; },
-      __setSubmitted: function (v) { pageSubmitDone = !!v; return pageSubmitDone; },
+      __setSubmitted: function (v) { pageSubmitDone = !!v; if (!v) submitClickedAt = 0; return pageSubmitDone; },
+      __simulateSubmit: function (agoMs) { submitClickedAt = Date.now() - (agoMs || 0); pageSubmitDone = false; return submitClickedAt; },
+      __setSubmitGap: function (sec) { settings.submitGap = sec; return settings.submitGap; },
       __setSettings: function (s) { settings = Object.assign({}, DEFAULTS, s || {}); return settings; }
     };
   }
