@@ -19,7 +19,7 @@
     skipDialog: true,
     fillInputs: true,
     autoSubmitPage: true,
-    submitGap: 6   // 点"提交"后至少等 N 秒再点"下一节"，避免平台还没记上"已完成"就翻页
+    submitGap: 3   // 点"提交"后至少等 N 秒再点"下一节"，避免平台还没记上"已完成"就翻页
   };
 
   var settings = Object.assign({}, DEFAULTS);
@@ -1260,7 +1260,7 @@
   /** 提交后要求的"冷却间隔"（秒）：留足时间让平台把任务点记为"已完成" */
   function submitGapMs() {
     var s = parseInt(settings.submitGap, 10);
-    if (isNaN(s) || s < 0) s = 6;
+    if (isNaN(s) || s < 0) s = 3;
     return s * 1000;
   }
 

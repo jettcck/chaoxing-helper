@@ -16,7 +16,7 @@
     skipDialog: true,
     fillInputs: true,
     autoSubmitPage: true,
-    submitGap: 6
+    submitGap: 3
   };
 
   var PRESETS = {
@@ -97,7 +97,7 @@
       $('fillInputs').checked = s.fillInputs !== false;
       $('skipDialog').checked = !!s.skipDialog;
       $('autoSubmitPage').checked = !!s.autoSubmitPage;
-      $('submitGap').value = String(s.submitGap != null ? s.submitGap : 6);
+      $('submitGap').value = String(s.submitGap != null ? s.submitGap : 3);
       $('retry').value = String(s.retry | 0);
       markSpeed(s.speed);
     });
