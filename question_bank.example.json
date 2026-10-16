@@ -1,0 +1,20 @@
+[
+  {
+    "question": "Python 中用于输出内容的函数是什么？",
+    "answer": "print",
+    "type": "单选题",
+    "options": ["input", "print", "open", "len"],
+    "explanation": "print() 用于向标准输出打印内容。"
+  },
+  {
+    "question": "HTTP 的默认端口是多少？",
+    "answer": "80",
+    "type": "填空题"
+  },
+  {
+    "question": "以下哪些属于常见编程语言？",
+    "answer": "A,C",
+    "type": "多选题",
+    "options": ["Python", "Photoshop", "Java", "Excel"]
+  }
+]

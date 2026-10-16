@@ -1,0 +1,27 @@
+[
+  {
+    "question": "Python 中用于输出内容的函数是什么？",
+    "answer": "print",
+    "options": ["input", "print", "open", "len"],
+    "type": "单选题",
+    "explanation": "print() 用于向标准输出打印内容。"
+  },
+  {
+    "question": "HTTP 的默认端口是多少？",
+    "answer": "80",
+    "type": "填空题"
+  },
+  {
+    "question": "以下哪些属于常见编程语言？",
+    "answer": "A,C",
+    "options": ["Python", "Photoshop", "Java", "Excel"],
+    "type": "多选题"
+  },
+  {
+    "question": "计算机中数据存储的最小单位是？",
+    "answer": "比特",
+    "options": ["字节", "比特", "字", "KB"],
+    "type": "单选题",
+    "explanation": "bit（比特）是信息量的最小单位，1 字节 = 8 比特。"
+  }
+]

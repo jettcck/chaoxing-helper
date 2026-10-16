@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>学习通刷课助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>学习通刷课助手</h1>
+    <span id="ver" class="ver"></span>
+    <span id="conn" class="dot">●</span>
+  </header>
+
+  <section class="block">
+    <h2>一键倍速</h2>
+    <div class="speed-grid" id="speedGrid">
+      <button data-speed="1">1x</button>
+      <button data-speed="1.25">1.25x</button>
+      <button data-speed="1.5">1.5x</button>
+      <button data-speed="2">2x</button>
+      <button data-speed="4">4x</button>
+      <button data-speed="8">8x</button>
+      <button data-speed="16">16x</button>
+    </div>
+    <p class="hint">点击即对当前页视频立即生效，并被持续维持。</p>
+  </section>
+
+  <section class="block">
+    <h2>一键操作</h2>
+    <div class="row">
+      <button id="btnAnswer" class="primary">一键答题</button>
+      <button id="btnNext">下一节</button>
+      <button id="btnSpeedNow">应用倍速</button>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>答题模型（OpenAI 兼容接口）</h2>
+    <label class="inline">服务商
+      <select id="provider">
+        <option value="zhipu">智谱 GLM-4-Flash（免费）</option>
+        <option value="openrouter">OpenRouter（:free 免费模型）</option>
+        <option value="siliconflow">硅基流动（部分免费）</option>
+        <option value="deepseek">DeepSeek（付费）</option>
+        <option value="ollama">本地 Ollama（免费）</option>
+        <option value="custom">自定义</option>
+      </select>
+    </label>
+    <label>接口地址
+      <input type="text" id="baseUrl" placeholder="https://.../chat/completions">
+    </label>
+    <label>模型名
+      <input type="text" id="model" placeholder="glm-4-flash">
+    </label>
+    <label>API Key
+      <input type="password" id="apiKey" placeholder="仅保存在本机">
+    </label>
+    <div class="row">
+      <button id="btnSaveLLM" class="primary">保存模型设置</button>
+      <button id="btnTest">测试连接</button>
+    </div>
+    <p class="hint" id="llmHint">免费方案：智谱 glm-4-flash 国内直连；OpenRouter 用带 :free 的模型名；本地 Ollama 可留空 Key。</p>
+  </section>
+
+  <section class="block">
+    <h2>自动功能</h2>
+    <label><input type="checkbox" id="autoPlay"> 自动播放（暂停自动恢复）</label>
+    <label><input type="checkbox" id="mute"> 静音</label>
+    <label><input type="checkbox" id="autoNext"> 自动下一节（视频结束 / 提交后 / 跳过"任务点未完成"弹窗）</label>
+    <label><input type="checkbox" id="autoAnswer"> 出现题目自动作答</label>
+    <label><input type="checkbox" id="useAI"> 用大模型答题（推荐）</label>
+    <label><input type="checkbox" id="useBank"> 大模型失败时用本地题库兜底</label>
+    <label><input type="checkbox" id="fillInputs"> 填空题自动填写</label>
+    <label><input type="checkbox" id="skipDialog"> 自动处理页面弹窗（提示框 / 提交确认）</label>
+    <label class="inline">答错重试次数
+      <select id="retry">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="autoSubmitPage"> 全部答完后自动点整页提交</label>
+    <button id="btnSave" class="primary">保存设置</button>
+  </section>
+
+  <section class="block">
+    <h2>诊断</h2>
+    <p class="hint">识别异常时点这里，可看到每题解析出的题干、选项与选中态。</p>
+    <button id="btnDump" class="ghost">诊断题目</button>
+    <textarea id="dumpBox" readonly placeholder="点击上方按钮后在此显示解析详情"></textarea>
+  </section>
+
+  <section class="block status">
+    <h2>状态</h2>
+    <div id="status">读取中…</div>
+    <button id="btnRefresh" class="ghost">刷新状态</button>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>
