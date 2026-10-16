@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "学习通刷课助手",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "学习通课程视频自动播放、一键倍速、接入大模型自动答题、自动下一节。",
   "permissions": ["storage", "webNavigation"],
   "host_permissions": [

@@ -113,6 +113,9 @@
       $('model').value = c.model || (preset ? preset.model : '');
       $('apiKey').value = c.apiKey || '';
       if (preset && preset.hint) setHint(preset.hint);
+      // 还没配置 Key → 自动展开新手教程；已配置 → 收起，避免干扰
+      var g = $('guide');
+      if (g) g.open = !c.apiKey;
     });
   }
 
@@ -244,8 +247,14 @@
     saveLLM().then(function () {
       chrome.runtime.sendMessage({ type: 'LLM_TEST' }, function (resp) {
         if (chrome.runtime.lastError) { setStatus('测试失败：' + chrome.runtime.lastError.message); return; }
-        if (resp && resp.ok) setStatus('连接成功：' + (resp.model || '') + ' 返回「' + String(resp.answer).trim().slice(0, 40) + '」');
-        else setStatus('连接失败：' + ((resp && resp.error) || '未知错误'));
+        if (resp && resp.ok) {
+          setStatus('连接成功：' + (resp.model || '') + ' 返回「' + String(resp.answer).trim().slice(0, 40) + '」');
+          var g = $('guide');
+          if (g) g.open = false;   // 配好了就收起教程
+        } else {
+          setStatus('连接失败：' + ((resp && resp.error) || '未知错误') +
+            '\n（不会配？点上方「📖 新手教程」按步骤来）');
+        }
       });
     });
   });

@@ -37,6 +37,44 @@
 
   <section class="block">
     <h2>答题模型（OpenAI 兼容接口）</h2>
+
+    <details id="guide" class="guide">
+      <summary>📖 新手教程：3 分钟拿到免费 API Key（点开）</summary>
+      <div class="guide-body">
+        <p class="g-lead">三种方案任选其一。<b>推荐方案 A</b>——免费、国内直连、不用装任何软件。</p>
+
+        <h3>方案 A · 智谱 GLM-4-Flash（免费，推荐）</h3>
+        <ol>
+          <li>打开 <a href="https://open.bigmodel.cn/" target="_blank" rel="noreferrer">open.bigmodel.cn</a>，右上角「注册/登录」，用手机号注册。</li>
+          <li>登录后按提示完成<b>实名认证</b>（免费，通常几分钟通过）。</li>
+          <li>左侧菜单进「API Keys」→「创建 API Key」→ <b>复制</b>生成的 Key（形如 <code>一串字符.一串字符</code>，<b>只显示一次，先存好</b>）。</li>
+          <li>回到本弹窗：服务商选「智谱 GLM-4-Flash（免费）」，模型名保持 <code>glm-4-flash</code>，把 Key 粘进「API Key」框。</li>
+          <li>点「保存模型设置」→ 再点「测试连接」。出现<b>「连接成功」</b>即可开始答题。</li>
+        </ol>
+
+        <h3>方案 B · 本地 Ollama（免费、无需 Key、数据不出本机）</h3>
+        <ol>
+          <li>到 <a href="https://ollama.com/download" target="_blank" rel="noreferrer">ollama.com/download</a> 下载并安装。</li>
+          <li>打开命令行执行：<code>ollama pull qwen2.5:7b</code>（约 4.7&nbsp;GB，首次较慢）。</li>
+          <li>服务商选「本地 Ollama」，<b>「API Key」留空</b>，保存设置 → 测试连接。</li>
+        </ol>
+
+        <h3>方案 C · DeepSeek（付费，便宜且答题较准）</h3>
+        <ol>
+          <li>到 <a href="https://platform.deepseek.com/" target="_blank" rel="noreferrer">platform.deepseek.com</a> 注册 →「API Keys」→ 创建并复制。</li>
+          <li>服务商选「DeepSeek（付费）」，粘贴 Key，保存设置 → 测试连接。</li>
+        </ol>
+
+        <h3>常见问题</h3>
+        <ul>
+          <li><b>提示 401 / 403</b>：Key 没复制全或已失效，重新复制粘贴一次。</li>
+          <li><b>提示 429</b>：免费额度限流（智谱约 5 次/分钟）。等 1 分钟再试，或把「答错重试次数」调小以减少调用。</li>
+          <li><b>Key 会被上传吗？</b>不会。Key 只保存在你本机浏览器（<code>chrome.storage.local</code>），仅用于直接请求你选的那家服务商，本插件不经过任何中间服务器。</li>
+          <li><b>只想刷视频、不想答题？</b>取消勾选「出现题目自动作答」，就无需配置 Key。</li>
+        </ul>
+      </div>
+    </details>
+
     <label class="inline">服务商
       <select id="provider">
         <option value="zhipu">智谱 GLM-4-Flash（免费）</option>
@@ -60,7 +98,7 @@
       <button id="btnSaveLLM" class="primary">保存模型设置</button>
       <button id="btnTest">测试连接</button>
     </div>
-    <p class="hint" id="llmHint">免费方案：智谱 glm-4-flash 国内直连；OpenRouter 用带 :free 的模型名；本地 Ollama 可留空 Key。</p>
+    <p class="hint" id="llmHint">不会配置？点上方「📖 新手教程」按步骤来。免费方案：智谱 glm-4-flash 国内直连；本地 Ollama 可留空 Key。</p>
   </section>
 
   <section class="block">

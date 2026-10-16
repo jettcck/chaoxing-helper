@@ -125,3 +125,50 @@ textarea {
 
 .status { margin-bottom: 0; }
 #status { font-size: 12px; color: #b8c0d0; line-height: 1.7; white-space: pre-wrap; }
+
+/* ---- 新手教程（details） ---- */
+.guide {
+  background: #1b202b;
+  border: 1px solid #3a4257;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.guide > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6ea0ff;
+  background: #202636;
+  user-select: none;
+}
+.guide > summary::-webkit-details-marker { display: none; }
+.guide > summary::before { content: "▸ "; color: #6ea0ff; }
+.guide[open] > summary::before { content: "▾ "; }
+.guide > summary:hover { background: #24304a; }
+
+.guide-body { padding: 10px; font-size: 11px; line-height: 1.65; color: #b8c0d0; }
+.guide-body .g-lead { margin-bottom: 8px; color: #cfd6e4; }
+.guide-body h3 {
+  font-size: 11px;
+  color: #e8eaed;
+  margin: 10px 0 4px;
+  padding-left: 7px;
+  border-left: 3px solid #3d6df0;
+}
+.guide-body ol, .guide-body ul { margin: 4px 0 4px 16px; }
+.guide-body li { margin-bottom: 4px; }
+.guide-body a { color: #6ea0ff; text-decoration: none; word-break: break-all; }
+.guide-body a:hover { text-decoration: underline; }
+.guide-body code {
+  background: #141824;
+  border: 1px solid #333a4d;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: Consolas, Menlo, monospace;
+  color: #8fd3a8;
+  word-break: break-all;
+}
+.guide-body b { color: #e8eaed; }
